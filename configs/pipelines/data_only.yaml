@@ -1,0 +1,9 @@
+pipeline:
+  name: data_only
+  description: Stop after producing a reusable feature matrix.
+  stages:
+    - ingest
+    - profile
+    - clean
+    - transform
+    - build_features

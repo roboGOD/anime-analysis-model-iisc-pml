@@ -1,0 +1,17 @@
+pipeline:
+  name: full
+  description: End-to-end pipeline from raw ingestion through reporting.
+  stages:
+    - ingest
+    - profile
+    - clean
+    - transform
+    - build_features
+    - select_model
+    - train_model
+    - assign_clusters
+    - evaluate
+    - diagnostics
+    - plot_eda
+    - plot_model
+    - plot_report

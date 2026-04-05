@@ -1,0 +1,46 @@
+raw_files:
+  primary: data/raw/anime-dataset-2023.csv
+required_columns:
+  - anime_id
+  - Name
+  - Genres
+  - Type
+  - Episodes
+  - Source
+  - Rating
+  - Score
+  - Scored By
+  - Members
+  - Popularity
+optional_columns:
+  - English name
+  - Other name
+  - Synopsis
+  - Aired
+  - Premiered
+  - Status
+  - Producers
+  - Licensors
+  - Studios
+  - Duration
+  - Rank
+  - Favorites
+  - Image URL
+missing_value_tokens:
+  - UNKNOWN
+  - Unknown
+  - ""
+  - " "
+  - null
+deduplication:
+  subset:
+    - anime_id
+  keep: first
+filters:
+  min_score: 0.0
+  max_score: 10.0
+  min_members: 1
+  allowed_status:
+    - Finished Airing
+    - Currently Airing
+    - Not yet aired

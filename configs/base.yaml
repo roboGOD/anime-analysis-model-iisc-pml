@@ -1,0 +1,24 @@
+project:
+  name: anime-clustering-workbench
+runtime:
+  random_seed: 42
+  logging_level: INFO
+  overwrite: false
+  skip_existing: false
+experiment:
+  active_pipeline: full
+  active_model: gmm
+paths:
+  raw_data_dir: data/raw
+  interim_data_dir: data/interim
+  processed_data_dir: data/processed
+  artifacts_dir: artifacts
+  checkpoints_dir: artifacts/checkpoints
+  models_dir: artifacts/models
+  metrics_dir: artifacts/metrics
+  plots_dir: artifacts/plots
+  reports_dir: artifacts/reports
+  run_configs_dir: artifacts/reports/run_configs
+  logs_dir: logs
+  model_configs_dir: configs/models
+  pipeline_configs_dir: configs/pipelines

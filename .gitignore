@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.python-version
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Data and artifacts
+data/raw/*
+data/interim/*
+data/processed/*
+artifacts/checkpoints/*
+artifacts/models/*
+artifacts/metrics/*
+artifacts/plots/*
+artifacts/reports/*
+logs/*
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!artifacts/checkpoints/.gitkeep
+!artifacts/models/.gitkeep
+!artifacts/metrics/.gitkeep
+!artifacts/plots/.gitkeep
+!artifacts/reports/.gitkeep
+!artifacts/reports/run_configs/
+!artifacts/reports/run_configs/.gitkeep
+!logs/.gitkeep
+
+# Misc
+*.log
+*.tmp

@@ -1,0 +1,30 @@
+numeric_columns:
+  - score
+  - episodes
+  - rank
+  - popularity
+  - favorites
+  - scored_by
+  - members
+  - duration_minutes
+categorical_columns:
+  - type
+  - source
+  - rating
+  - status
+  - premiered_season
+multi_label_columns:
+  - genres
+log_transform_columns:
+  - scored_by
+  - members
+  - favorites
+  - popularity
+scaler:
+  name: standard
+encoder:
+  one_hot_min_frequency: 0.01
+  handle_unknown: ignore
+columns_to_exclude:
+  - synopsis
+  - image_url
