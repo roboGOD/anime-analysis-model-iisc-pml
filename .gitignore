@@ -37,6 +37,7 @@ logs/*
 !artifacts/plots/.gitkeep
 !artifacts/reports/.gitkeep
 !artifacts/reports/run_configs/
+artifacts/reports/run_configs/*.json
 !artifacts/reports/run_configs/.gitkeep
 !logs/.gitkeep
 
