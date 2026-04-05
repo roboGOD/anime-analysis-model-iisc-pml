@@ -26,7 +26,8 @@ def run(
     model_path = models_dir / f"final_{adapter.model_name}.joblib"
     metadata_path = models_dir / f"{adapter.model_name}_model_metadata.json"
     summary_path = reports_dir / f"final_{adapter.model_name}_summary.json"
-    feature_names_path = checkpoints_dir / "feature_names.json"
+    model_specific_feature_names = checkpoints_dir / f"{adapter.model_name}_feature_names.json"
+    feature_names_path = model_specific_feature_names if model_specific_feature_names.exists() else checkpoints_dir / "feature_names.json"
     best_path = metrics_dir / f"{adapter.model_name}_best_params.json"
     if model_path.exists() and metadata_path.exists() and summary_path.exists() and not overwrite:
         logger.info("Skipping model training; outputs already exist")

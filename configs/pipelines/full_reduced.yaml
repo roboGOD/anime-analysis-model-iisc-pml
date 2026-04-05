@@ -1,0 +1,19 @@
+pipeline:
+  name: full_reduced
+  description: End-to-end pipeline from raw ingestion through reporting with PCA reduction before GMM.
+  stages:
+    - ingest
+    - profile
+    - validate
+    - clean
+    - transform
+    - build_matrix
+    - reduce_features
+    - select_model
+    - train_model
+    - assign_clusters
+    - evaluate
+    - diagnostics
+    - plot_eda
+    - plot_model
+    - plot_report

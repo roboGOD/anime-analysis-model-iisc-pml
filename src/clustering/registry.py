@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from src.clustering.base import ClusteringModelAdapter
 from src.clustering.models.gmm import GMMModelAdapter
+from src.clustering.models.gmm_reduced import GMMReducedModelAdapter
 
 
 MODEL_REGISTRY: dict[str, type[ClusteringModelAdapter]] = {
     "gmm": GMMModelAdapter,
+    "gmm_reduced": GMMReducedModelAdapter,
 }
 
 

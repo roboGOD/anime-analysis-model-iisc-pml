@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import calinski_harabasz_score, davies_bouldin_score, silhouette_score
 
+from src.modeling.artifacts import cluster_profile_csv_path, cluster_profile_md_path
 from src.utils.io import read_dataframe, write_dataframe, write_json
 
 
@@ -27,8 +28,8 @@ def run(
     overwrite: bool = False,
 ) -> dict[str, str]:
     metrics_path = metrics_dir / f"final_{model_name}_metrics.json"
-    profile_csv_path = reports_dir / "cluster_profile_tables.csv"
-    profile_md_path = reports_dir / "cluster_profile_summary.md"
+    profile_csv_path = cluster_profile_csv_path(reports_dir, model_name)
+    profile_md_path = cluster_profile_md_path(reports_dir, model_name)
     cluster_sizes_path = metrics_dir / f"{model_name}_cluster_sizes.csv"
     if metrics_path.exists() and profile_csv_path.exists() and profile_md_path.exists() and not overwrite:
         logger.info("Skipping evaluation; outputs already exist")
@@ -129,6 +130,9 @@ def run(
     write_dataframe(cluster_sizes, cluster_sizes_path)
     write_dataframe(pd.DataFrame(profile_rows), profile_csv_path)
     profile_md_path.write_text("\n".join(report_sections), encoding="utf-8")
+    if model_name == "gmm":
+        write_dataframe(pd.DataFrame(profile_rows), reports_dir / "cluster_profile_tables.csv")
+        (reports_dir / "cluster_profile_summary.md").write_text("\n".join(report_sections), encoding="utf-8")
     logger.info("Saved final evaluation outputs to %s", metrics_path)
     return {
         "metrics": str(metrics_path),

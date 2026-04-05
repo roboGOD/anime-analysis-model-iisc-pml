@@ -18,6 +18,7 @@ AVAILABLE_STAGES = [
     "clean",
     "transform",
     "build_matrix",
+    "reduce_features",
     "select_model",
     "train_model",
     "assign_clusters",
@@ -87,7 +88,7 @@ def run_pipeline(
                 overwrite=effective_overwrite,
                 skip_existing=effective_skip_existing,
             )
-        elif stage in {"select_model", "train_model", "assign_clusters", "evaluate", "diagnostics"}:
+        elif stage in {"reduce_features", "select_model", "train_model", "assign_clusters", "evaluate", "diagnostics"}:
             result = modeling_pipeline.run_stage(
                 stage,
                 adapter,
@@ -96,6 +97,7 @@ def run_pipeline(
                 run_paths.checkpoints_dir,
                 run_paths.models_dir,
                 run_paths.metrics_dir,
+                run_paths.plots_dir,
                 processed_dir,
                 run_paths.reports_dir,
                 logger,
@@ -105,6 +107,7 @@ def run_pipeline(
             result = reporting_pipeline.run_stage(
                 stage,
                 adapter,
+                model_config,
                 interim_dir,
                 processed_dir,
                 run_paths.checkpoints_dir,

@@ -30,6 +30,12 @@ Run the default full pipeline:
 python scripts/run_all.py
 ```
 
+Run the PCA-reduced GMM pipeline:
+
+```bash
+python scripts/run_all_reduced.py
+```
+
 Run a different model or pipeline config:
 
 ```bash
@@ -53,6 +59,11 @@ Useful runner scripts:
 - `python scripts/run_train_model.py`
 - `python scripts/run_train_gmm.py`
 - `python scripts/run_evaluation.py`
+- `python scripts/run_reduce_features.py`
+- `python scripts/run_model_selection_reduced.py`
+- `python scripts/run_train_gmm_reduced.py`
+- `python scripts/run_evaluation_reduced.py`
+- `python scripts/run_all_reduced.py`
 - `python scripts/run_report.py`
 
 ## Organization
@@ -73,7 +84,12 @@ No data pipeline code or runner script needs to be duplicated for a new model.
 
 ## Clustering Approach
 
-The repository currently implements anime-level clustering with a Gaussian Mixture Model (GMM). Each anime is converted into a numeric feature vector and the model assumes those vectors were generated from a mixture of `K` latent Gaussian components. Unlike a hard clustering method, GMM gives both a hard cluster label and a soft probability distribution over clusters for every title.
+The repository currently implements two anime-level clustering variants:
+
+- `gmm`: fit a Gaussian Mixture Model directly on the full engineered feature matrix.
+- `gmm_reduced`: apply PCA to the full engineered feature matrix first, then fit GMM on the reduced representation.
+
+Each anime is converted into a numeric feature vector and the model assumes those vectors were generated from a mixture of `K` latent Gaussian components. Unlike a hard clustering method, GMM gives both a hard cluster label and a soft probability distribution over clusters for every title.
 
 In this repository, the clustering input is built from the cleaned metadata pipeline:
 
@@ -106,7 +122,7 @@ These are hypotheses the model tests, not guaranteed truths. The evaluation and 
 
 ### GMM Workflow
 
-The implemented GMM flow is:
+The implemented full-space GMM flow is:
 
 1. Build the processed feature matrix and row mapping from the cleaned anime metadata.
 2. Search across candidate `K` values and covariance types (`diag`, `full`).
@@ -116,6 +132,8 @@ The implemented GMM flow is:
 6. Profile each cluster with size, dominant genres, representative anime, ambiguous anime, and distinguishing numeric signals.
 
 This makes the clustering useful for interpretation, not only for optimization.
+
+The reduced-space flow reuses the same upstream preprocessing, saves `data/processed/X_gmm_reduced.npy`, exports PCA metadata and loadings, and writes reduced-model artifacts under `gmm_reduced_*` filenames so it does not overwrite the baseline outputs.
 
 ### What To Look For In Results
 

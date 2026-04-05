@@ -4,12 +4,14 @@ import logging
 from pathlib import Path
 
 from src.clustering.base import ClusteringModelAdapter
+from src.modeling.artifacts import matrix_npy_path, model_assignments_parquet_path
 from src.visualization import eda_plots, model_plots, report_plots
 
 
 def run_stage(
     stage: str,
     adapter: ClusteringModelAdapter,
+    model_config: dict,
     interim_dir: Path,
     processed_dir: Path,
     checkpoints_dir: Path,
@@ -33,8 +35,8 @@ def run_stage(
     if stage == "plot_report":
         return report_plots.run(
             adapter.model_name,
-            reports_dir / "cluster_assignments.parquet",
-            processed_dir / "X_gmm.npy",
+            model_assignments_parquet_path(reports_dir, adapter.model_name),
+            matrix_npy_path(processed_dir, model_config, adapter.model_name),
             processed_dir / "anime_cleaned.parquet",
             plots_dir,
             logger,

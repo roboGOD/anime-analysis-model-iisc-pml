@@ -1,0 +1,45 @@
+model:
+  name: gmm_reduced
+  family: probabilistic
+artifacts:
+  matrix_stem: X_gmm_reduced
+reduction:
+  method: pca
+  source_matrix_stem: X_gmm
+  component_selection: explained_variance
+  n_components: 20
+  explained_variance_target: 0.9
+  top_loading_features: 10
+  pca:
+    svd_solver: auto
+    whiten: false
+    random_seed: 42
+selection:
+  enabled: true
+  candidate_k:
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+  covariance_types:
+    - diag
+    - full
+  scoring:
+    primary: bic
+    secondary: aic
+final_model:
+  k: null
+  covariance_type: null
+training:
+  max_iter: 300
+  tol: 0.001
+  reg_covar: 0.000001
+  n_init: 5
+  init_params: kmeans
