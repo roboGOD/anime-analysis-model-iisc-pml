@@ -62,17 +62,16 @@ def run(
 
     summary = {
         "chosen_k": int(training_params["k"]),
-        "covariance_type": training_params["covariance_type"],
         "random_seed": seed,
-        "n_init": int(training_params["n_init"]),
-        "max_iter": int(training_params["max_iter"]),
-        "tol": float(training_params["tol"]),
-        "reg_covar": float(training_params["reg_covar"]),
-        "converged": diagnostics["converged"],
-        "n_iter": diagnostics["n_iter"],
-        "lower_bound": diagnostics["lower_bound"],
+        "training_params": training_params,
         "feature_names_path": str(feature_names_path),
     }
+    for key in ["covariance_type", "n_init", "max_iter", "tol", "reg_covar", "init_params", "init", "algorithm"]:
+        if key in training_params:
+            summary[key] = training_params[key]
+    for key in ["converged", "n_iter", "lower_bound", "inertia", "component_count"]:
+        if diagnostics.get(key) is not None:
+            summary[key] = diagnostics[key]
 
     joblib.dump(model, model_path)
     write_json(diagnostics, metadata_path)

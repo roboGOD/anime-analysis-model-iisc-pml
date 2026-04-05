@@ -41,6 +41,7 @@ def run(
         "converged": metadata.get("converged"),
         "n_iter": metadata.get("n_iter"),
         "lower_bound": metadata.get("lower_bound"),
+        "inertia": metadata.get("inertia"),
         "component_weight_distribution": weights.tolist(),
         "smallest_component_weight": float(weights.min()) if weights.size else None,
         "near_zero_weight_component": bool(weights.size and np.any(weights < 0.01)),

@@ -117,7 +117,7 @@ def run(
     alpha = np.clip(merged["max_probability"].to_numpy(), 0.2, 1.0)
     fig, ax = plt.subplots(figsize=(8, 6))
     scatter = ax.scatter(projection[:, 0], projection[:, 1], c=merged["cluster"], s=14, alpha=alpha, cmap="tab20")
-    ax.set_title("GMM Cluster Projection")
+    ax.set_title(f"{model_name.upper()} Cluster Projection")
     fig.colorbar(scatter, ax=ax, label="Cluster")
     fig.tight_layout()
     fig.savefig(projection_path, dpi=150)

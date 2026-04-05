@@ -37,7 +37,7 @@ def run(
     model = joblib.load(model_path)
     assignments, probabilities = adapter.predict(model, x)
     if probabilities is None:
-        raise ValueError("GMM assignments require soft probabilities")
+        probabilities = np.eye(int(assignments.max()) + 1, dtype=float)[assignments]
 
     entropy = -(probabilities * np.log(probabilities + 1e-12)).sum(axis=1)
     output = row_mapping.copy()

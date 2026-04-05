@@ -36,6 +36,12 @@ Run the PCA-reduced GMM pipeline:
 python scripts/run_all_reduced.py
 ```
 
+Run the PCA-reduced K-means pipeline:
+
+```bash
+python scripts/run_kmeans_reduced.py
+```
+
 Run a different model or pipeline config:
 
 ```bash
@@ -64,6 +70,10 @@ Useful runner scripts:
 - `python scripts/run_train_gmm_reduced.py`
 - `python scripts/run_evaluation_reduced.py`
 - `python scripts/run_all_reduced.py`
+- `python scripts/run_model_selection_kmeans_reduced.py`
+- `python scripts/run_train_kmeans_reduced.py`
+- `python scripts/run_evaluation_kmeans_reduced.py`
+- `python scripts/run_kmeans_reduced.py`
 - `python scripts/run_report.py`
 
 ## Organization
@@ -84,12 +94,13 @@ No data pipeline code or runner script needs to be duplicated for a new model.
 
 ## Clustering Approach
 
-The repository currently implements two anime-level clustering variants:
+The repository currently implements three anime-level clustering variants:
 
 - `gmm`: fit a Gaussian Mixture Model directly on the full engineered feature matrix.
 - `gmm_reduced`: apply PCA to the full engineered feature matrix first, then fit GMM on the reduced representation.
+- `kmeans_reduced`: apply PCA to the full engineered feature matrix first, then fit K-means on the reduced representation.
 
-Each anime is converted into a numeric feature vector and the model assumes those vectors were generated from a mixture of `K` latent Gaussian components. Unlike a hard clustering method, GMM gives both a hard cluster label and a soft probability distribution over clusters for every title.
+Each anime is converted into a numeric feature vector. The GMM variants model those vectors as a mixture of `K` latent Gaussian components, while the K-means variant assigns each title to the nearest centroid in the PCA-reduced space. Unlike a hard clustering method, GMM gives both a hard cluster label and a soft probability distribution over clusters for every title.
 
 In this repository, the clustering input is built from the cleaned metadata pipeline:
 
@@ -134,6 +145,14 @@ The implemented full-space GMM flow is:
 This makes the clustering useful for interpretation, not only for optimization.
 
 The reduced-space flow reuses the same upstream preprocessing, saves `data/processed/X_gmm_reduced.npy`, exports PCA metadata and loadings, and writes reduced-model artifacts under `gmm_reduced_*` filenames so it does not overwrite the baseline outputs.
+
+For K-means, the reduced-space flow saves `data/processed/X_kmeans_reduced.npy`, selects `K` using silhouette as the primary criterion with Davies-Bouldin and inertia as tie-break support, and writes artifacts under `kmeans_reduced_*` filenames.
+
+### Run Commands By Approach
+
+- Approach 1, full-space GMM: `python scripts/run_all.py --model gmm --pipeline full`
+- Approach 2, PCA + GMM: `python scripts/run_all_reduced.py`
+- Approach 3, PCA + K-means: `python scripts/run_kmeans_reduced.py`
 
 ### What To Look For In Results
 

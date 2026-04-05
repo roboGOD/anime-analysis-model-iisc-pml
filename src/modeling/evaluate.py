@@ -44,6 +44,7 @@ def run(
     cleaned = read_dataframe(cleaned_metadata_path)
     x = np.load(matrix_path)
     selection = json.loads(selection_summary_path.read_text(encoding="utf-8"))
+    best_selection_metrics = selection["best_metrics"]
 
     merged = assignments.merge(cleaned, on=["anime_id", "name"], how="left")
     labels = assignments["cluster"].to_numpy()
@@ -52,9 +53,10 @@ def run(
     cluster_sizes["proportion"] = cluster_sizes["count"] / len(assignments)
 
     metrics = {
-        "bic": selection["best_metrics"]["bic"],
-        "aic": selection["best_metrics"]["aic"],
-        "average_log_likelihood": selection["best_metrics"]["log_likelihood"],
+        "selection_metric_primary": selection.get("selection_metric_primary"),
+        "selection_metric_secondary": selection.get("selection_metric_secondary"),
+        "selection_metric_tertiary": selection.get("selection_metric_tertiary"),
+        "best_selection_metrics": best_selection_metrics,
         "silhouette_score": float(silhouette_score(x, labels)) if len(np.unique(labels)) > 1 else None,
         "davies_bouldin_index": float(davies_bouldin_score(x, labels)) if len(np.unique(labels)) > 1 else None,
         "calinski_harabasz_score": float(calinski_harabasz_score(x, labels)) if len(np.unique(labels)) > 1 else None,
@@ -68,6 +70,14 @@ def run(
         "assignment_entropy_median": float(assignments["assignment_entropy"].median()),
         "assignment_entropy_max": float(assignments["assignment_entropy"].max()),
     }
+    if "bic" in best_selection_metrics:
+        metrics["bic"] = best_selection_metrics["bic"]
+    if "aic" in best_selection_metrics:
+        metrics["aic"] = best_selection_metrics["aic"]
+    if "log_likelihood" in best_selection_metrics:
+        metrics["average_log_likelihood"] = best_selection_metrics["log_likelihood"]
+    if "inertia" in best_selection_metrics:
+        metrics["inertia"] = best_selection_metrics["inertia"]
 
     numeric_columns = [
         column for column in ["score", "episodes", "duration_minutes", "members", "favorites", "scored_by", "popularity", "rank"]
@@ -116,11 +126,23 @@ def run(
             ]
         )
 
+    report_sections.extend(["## Limitations"])
+    if model_name.startswith("gmm"):
+        report_sections.extend(
+            [
+                "- Gaussian assumptions may not perfectly fit mixed metadata features.",
+                "- Sparse one-hot and multi-hot features reduce Gaussian faithfulness.",
+            ]
+        )
+    if model_name.startswith("kmeans"):
+        report_sections.extend(
+            [
+                "- K-means favors roughly spherical, equally scaled clusters under Euclidean distance.",
+                "- Cluster centroids in PCA space may simplify away semantically useful low-variance structure.",
+            ]
+        )
     report_sections.extend(
         [
-            "## Limitations",
-            "- Gaussian assumptions may not perfectly fit mixed metadata features.",
-            "- Sparse one-hot and multi-hot features reduce Gaussian faithfulness.",
             "- Cluster meaning depends heavily on preprocessing choices.",
             "- Unsupervised metrics do not fully capture semantic usefulness.",
         ]

@@ -10,6 +10,43 @@ from src.clustering.base import ClusteringModelAdapter
 from src.utils.io import write_dataframe, write_json
 
 
+def _sort_spec(model_config: dict) -> tuple[list[str], list[bool]]:
+    scoring = model_config["selection"]["scoring"]
+    columns = [scoring["primary"], scoring["secondary"]]
+    directions = [
+        scoring.get("primary_mode", "min") == "min",
+        scoring.get("secondary_mode", "min") == "min",
+    ]
+    if scoring.get("tertiary") is not None:
+        columns.append(scoring["tertiary"])
+        directions.append(scoring.get("tertiary_mode", "min") == "min")
+    return columns, directions
+
+
+def _describe_best_choice(adapter: ClusteringModelAdapter, best_params: dict, best_row: dict, scoring: dict) -> list[str]:
+    selected_bits = [f"`K={best_params['k']}`"]
+    if "covariance_type" in best_params:
+        selected_bits.append(f"covariance `{best_params['covariance_type']}`")
+
+    lines = [
+        f"# {adapter.model_name.upper()} Model Selection Summary",
+        f"- Selected {' with '.join(selected_bits)}.",
+    ]
+    for label, mode_key in [
+        (scoring["primary"], "primary_mode"),
+        (scoring["secondary"], "secondary_mode"),
+        (scoring.get("tertiary"), "tertiary_mode"),
+    ]:
+        if label is None or label not in best_row or best_row[label] is None:
+            continue
+        direction = "minimize" if scoring.get(mode_key, "min") == "min" else "maximize"
+        lines.append(f"- {label}: {best_row[label]:.6f} ({direction}).")
+    if "smallest_cluster_proportion" in best_row:
+        lines.append(f"- Smallest cluster proportion: {best_row['smallest_cluster_proportion']:.4f}.")
+    lines.append("- Selection rationale: apply the configured ranking metrics, then reject obviously imbalanced or degenerate solutions.")
+    return lines
+
+
 def run(
     matrix_path: Path,
     adapter: ClusteringModelAdapter,
@@ -40,37 +77,27 @@ def run(
     for candidate in adapter.selection_candidates(model_config):
         _, metrics = adapter.fit_candidate(x, candidate, seed)
         if metrics.get("degenerate_component"):
-            warnings.append(
-                f"Potentially degenerate component for k={metrics['k']} cov={metrics['covariance_type']}"
-            )
+            context = f" cov={metrics['covariance_type']}" if metrics.get("covariance_type") is not None else ""
+            warnings.append(f"Potentially degenerate component for k={metrics['k']}{context}")
         if metrics.get("smallest_cluster_proportion", 1.0) < 0.02:
-            warnings.append(
-                f"Extreme imbalance for k={metrics['k']} cov={metrics['covariance_type']}: smallest cluster proportion {metrics['smallest_cluster_proportion']:.4f}"
-            )
+            context = f" cov={metrics['covariance_type']}" if metrics.get("covariance_type") is not None else ""
+            warnings.append(f"Extreme imbalance for k={metrics['k']}{context}: smallest cluster proportion {metrics['smallest_cluster_proportion']:.4f}")
         rows.append(metrics)
 
-    results = pd.DataFrame(rows).sort_values(["bic", "aic"], ascending=True).reset_index(drop=True)
+    sort_columns, ascending = _sort_spec(model_config)
+    results = pd.DataFrame(rows).sort_values(sort_columns, ascending=ascending, na_position="last").reset_index(drop=True)
     best_params = adapter.pick_best_params(results, model_config)
-    best_row = results.iloc[0].to_dict()
+    best_row = adapter.best_row(results, best_params)
     summary = {
         "selection_metric_primary": model_config["selection"]["scoring"]["primary"],
         "selection_metric_secondary": model_config["selection"]["scoring"]["secondary"],
+        "selection_metric_tertiary": model_config["selection"]["scoring"].get("tertiary"),
         "best_params": best_params,
         "best_metrics": best_row,
         "candidate_count": int(len(results)),
         "warnings": warnings,
     }
-    rationale = "\n".join(
-        [
-            f"# {adapter.model_name.upper()} Model Selection Summary",
-            f"- Selected `K={best_params['k']}` with covariance `{best_params['covariance_type']}`.",
-            f"- Primary criterion: BIC ({best_row['bic']:.3f}).",
-            f"- Secondary criterion: AIC ({best_row['aic']:.3f}).",
-            f"- Log-likelihood support: {best_row['log_likelihood']:.6f}.",
-            f"- Smallest cluster proportion: {best_row['smallest_cluster_proportion']:.4f}.",
-            "- Selection rationale: choose the best BIC, then check AIC and imbalance warnings to avoid obviously degenerate solutions.",
-        ]
-    )
+    rationale = "\n".join(_describe_best_choice(adapter, best_params, best_row, model_config["selection"]["scoring"]))
 
     write_dataframe(results, results_path)
     write_json(best_params, best_path)

@@ -33,3 +33,13 @@ class ClusteringModelAdapter(ABC):
     @abstractmethod
     def diagnostics(self, model: Any) -> dict[str, Any]:
         raise NotImplementedError
+
+    def best_row(self, results: pd.DataFrame, best_params: dict[str, Any]) -> dict[str, Any]:
+        mask = pd.Series(True, index=results.index)
+        for key, value in best_params.items():
+            if key not in results.columns:
+                continue
+            mask &= results[key] == value
+        if mask.any():
+            return results.loc[mask].iloc[0].to_dict()
+        return results.iloc[0].to_dict()

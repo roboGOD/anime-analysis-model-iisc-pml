@@ -30,13 +30,14 @@ def _resolve_n_components(reduction_config: dict) -> tuple[int | float, str]:
 
 
 def _plot_explained_variance(
+    model_name: str,
     explained_ratio: np.ndarray,
     cumulative_ratio: np.ndarray,
     plots_dir: Path,
     logger: logging.Logger,
 ) -> dict[str, str]:
-    explained_path = plots_dir / "gmm_reduced_pca_explained_variance.png"
-    cumulative_path = plots_dir / "gmm_reduced_pca_cumulative_variance.png"
+    explained_path = plots_dir / f"{model_name}_pca_explained_variance.png"
+    cumulative_path = plots_dir / f"{model_name}_pca_cumulative_variance.png"
 
     fig, ax = plt.subplots(figsize=(9, 4.5))
     ax.bar(np.arange(1, len(explained_ratio) + 1), explained_ratio, color="#4e79a7")
@@ -64,10 +65,10 @@ def _plot_explained_variance(
     }
 
 
-def _plot_projection(x_reduced: np.ndarray, plots_dir: Path) -> str | None:
+def _plot_projection(model_name: str, x_reduced: np.ndarray, plots_dir: Path) -> str | None:
     if x_reduced.shape[1] < 2:
         return None
-    projection_path = plots_dir / "gmm_reduced_pca_projection_raw.png"
+    projection_path = plots_dir / f"{model_name}_pca_projection_raw.png"
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.scatter(x_reduced[:, 0], x_reduced[:, 1], s=12, alpha=0.55, color="#59a14f")
     ax.set_xlabel("PC1")
@@ -79,7 +80,7 @@ def _plot_projection(x_reduced: np.ndarray, plots_dir: Path) -> str | None:
     return str(projection_path)
 
 
-def _plot_component_loadings(loadings: pd.DataFrame, plots_dir: Path, top_n: int) -> list[str]:
+def _plot_component_loadings(model_name: str, loadings: pd.DataFrame, plots_dir: Path, top_n: int) -> list[str]:
     output_paths: list[str] = []
     for component in loadings["component"].unique()[: min(5, loadings["component"].nunique())]:
         part = loadings[loadings["component"] == component].copy()
@@ -87,7 +88,7 @@ def _plot_component_loadings(loadings: pd.DataFrame, plots_dir: Path, top_n: int
             continue
         strongest = pd.concat([part.nlargest(top_n, "loading"), part.nsmallest(top_n, "loading")], ignore_index=True)
         strongest = strongest.drop_duplicates(subset=["feature_name"]).sort_values("loading")
-        path = plots_dir / f"gmm_reduced_pca_component_loadings_{component.lower()}.png"
+        path = plots_dir / f"{model_name}_pca_component_loadings_{component.lower()}.png"
         fig, ax = plt.subplots(figsize=(10, 5))
         colors = np.where(strongest["loading"] >= 0, "#4e79a7", "#e15759")
         ax.barh(strongest["feature_name"], strongest["loading"], color=colors)
@@ -218,11 +219,11 @@ def run(
         "feature_names": str(component_names_path),
         "pre_reduction_summary": str(summary_path),
     }
-    outputs.update(_plot_explained_variance(explained_ratio, cumulative_ratio, plots_dir, logger))
-    projection_path = _plot_projection(x_reduced, plots_dir)
+    outputs.update(_plot_explained_variance(model_name, explained_ratio, cumulative_ratio, plots_dir, logger))
+    projection_path = _plot_projection(model_name, x_reduced, plots_dir)
     if projection_path:
         outputs["projection_plot"] = projection_path
-    component_plot_paths = _plot_component_loadings(loadings_long, plots_dir, top_n=top_n)
+    component_plot_paths = _plot_component_loadings(model_name, loadings_long, plots_dir, top_n=top_n)
     for index, path in enumerate(component_plot_paths, start=1):
         outputs[f"component_loading_plot_{index}"] = path
 
