@@ -14,9 +14,10 @@ from src.pipelines import data_pipeline, modeling_pipeline, reporting_pipeline
 AVAILABLE_STAGES = [
     "ingest",
     "profile",
+    "validate",
     "clean",
     "transform",
-    "build_features",
+    "build_matrix",
     "select_model",
     "train_model",
     "assign_clusters",
@@ -78,17 +79,13 @@ def run_pipeline(
     artifacts: dict[str, str] = {}
     for stage in selected_stages:
         logger.info("Stage start: %s", stage)
-        if stage in {"ingest", "profile", "clean", "transform", "build_features"}:
-            result = data_pipeline.run_stage(
-                stage,
-                data_config,
-                features_config,
-                interim_dir,
-                processed_dir,
-                run_paths.checkpoints_dir,
-                run_paths.reports_dir,
-                logger,
-                effective_overwrite,
+        if stage in {"ingest", "profile", "validate", "clean", "transform", "build_matrix"}:
+            result = data_pipeline.run_data_pipeline(
+                config_dir=config_dir,
+                stage=stage,
+                run_id=run_id,
+                overwrite=effective_overwrite,
+                skip_existing=effective_skip_existing,
             )
         elif stage in {"select_model", "train_model", "assign_clusters", "evaluate", "diagnostics"}:
             result = modeling_pipeline.run_stage(

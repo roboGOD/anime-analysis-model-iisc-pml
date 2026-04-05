@@ -4,6 +4,7 @@ pipeline:
   stages:
     - ingest
     - profile
+    - validate
     - clean
     - transform
-    - build_features
+    - build_matrix

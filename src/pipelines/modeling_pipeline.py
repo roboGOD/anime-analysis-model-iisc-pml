@@ -25,7 +25,7 @@ def run_stage(
 ) -> dict[str, str]:
     if stage == "select_model":
         return select_model(
-            checkpoints_dir / "feature_matrix.npy",
+            processed_dir / "X_gmm.npy",
             adapter,
             model_config,
             base_config,
@@ -35,7 +35,7 @@ def run_stage(
         )
     if stage == "train_model":
         return train_model(
-            checkpoints_dir / "feature_matrix.npy",
+            processed_dir / "X_gmm.npy",
             adapter,
             model_config,
             base_config,
@@ -46,8 +46,8 @@ def run_stage(
         )
     if stage == "assign_clusters":
         return assign_clusters(
-            processed_dir / "feature_ready_anime.parquet",
-            checkpoints_dir / "feature_matrix.npy",
+            checkpoints_dir / "row_mapping.parquet",
+            processed_dir / "X_gmm.npy",
             models_dir / f"{adapter.model_name}_model.joblib",
             adapter,
             processed_dir,

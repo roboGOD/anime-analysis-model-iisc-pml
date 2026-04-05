@@ -3,9 +3,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.pipeline.run_pipeline import run_pipeline
-from src.utils.paths import resolve_path
+from src.pipelines.data_pipeline import main
 
 
 if __name__ == "__main__":
-    run_pipeline(resolve_path("configs"), pipeline_name="data_only")
+    main()

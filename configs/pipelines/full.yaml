@@ -4,9 +4,10 @@ pipeline:
   stages:
     - ingest
     - profile
+    - validate
     - clean
     - transform
-    - build_features
+    - build_matrix
     - select_model
     - train_model
     - assign_clusters

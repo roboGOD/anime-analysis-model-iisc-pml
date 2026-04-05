@@ -19,7 +19,7 @@ def run_stage(
     overwrite: bool,
 ) -> dict[str, str]:
     if stage == "plot_eda":
-        return eda_plots.run(interim_dir / "cleaned_anime.parquet", plots_dir, logger, overwrite=overwrite)
+        return eda_plots.run_profile_plots(interim_dir / "anime_ingested.parquet", plots_dir, logger, overwrite=overwrite)
     if stage == "plot_model":
         return model_plots.run(
             metrics_dir / f"{adapter.model_name}_model_selection.csv",
@@ -31,7 +31,7 @@ def run_stage(
     if stage == "plot_report":
         return report_plots.run(
             processed_dir / f"{adapter.model_name}_cluster_assignments.parquet",
-            checkpoints_dir / "feature_matrix.npy",
+            processed_dir / "X_gmm.npy",
             plots_dir,
             logger,
             overwrite=overwrite,

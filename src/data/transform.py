@@ -1,69 +1,103 @@
 from __future__ import annotations
 
 import logging
-import re
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from src.utils.io import read_dataframe, write_dataframe, write_json
 
 
-def _parse_duration_minutes(value: str | float | None) -> float:
-    if value is None or value != value:
-        return np.nan
-    text = str(value).lower()
-    hours = re.search(r"(\d+)\s*hr", text)
-    minutes = re.search(r"(\d+)\s*min", text)
-    total = 0
-    if hours:
-        total += int(hours.group(1)) * 60
-    if minutes:
-        total += int(minutes.group(1))
-    if "per ep" in text and total:
-        return float(total)
-    if total:
-        return float(total)
-    return np.nan
-
-
-def _parse_premiered_season(value: str | float | None) -> str:
-    if value is None or value != value:
-        return "unknown"
+def _premiered_season(value: object) -> str:
+    if value is None or pd.isna(value):
+        return "missing"
     text = str(value).strip().lower()
-    return text.split()[0] if text and text != "unknown" else "unknown"
+    if text in {"unknown", "missing", ""}:
+        return "missing"
+    return text.split()[0]
 
 
-def run(cleaned_path: Path, interim_dir: Path, logger: logging.Logger, overwrite: bool = False) -> dict[str, str]:
-    output_path = interim_dir / "transformed_anime.parquet"
-    metadata_path = interim_dir / "transformation_metadata.json"
-    if output_path.exists() and not overwrite:
-        logger.info("Skipping transform; output already exists at %s", output_path)
-        return {"dataset": str(output_path), "metadata": str(metadata_path)}
+def _parse_multilabel_column(series: pd.Series) -> pd.Series:
+    return series.fillna("missing").astype(str).map(
+        lambda value: [item.strip() for item in value.split("|") if item.strip() and item.strip() != "missing"]
+    )
 
-    df = read_dataframe(cleaned_path)
-    df["genres"] = df["genres"].fillna("").map(lambda value: [part.strip() for part in str(value).split(",") if part.strip()])
-    df["duration_minutes"] = df["duration"].map(_parse_duration_minutes) if "duration" in df.columns else np.nan
-    df["premiered_season"] = df["premiered"].map(_parse_premiered_season) if "premiered" in df.columns else "unknown"
 
-    for column in ["favorites", "scored_by", "members", "popularity"]:
+def run(
+    cleaned_path: Path,
+    features_config: dict,
+    processed_dir: Path,
+    checkpoints_dir: Path,
+    logger: logging.Logger,
+    overwrite: bool = False,
+) -> dict[str, str]:
+    output_path = processed_dir / "anime_transformed.parquet"
+    feature_metadata_path = checkpoints_dir / "feature_metadata.json"
+    encoder_metadata_path = checkpoints_dir / "encoder_metadata.json"
+    if output_path.exists() and feature_metadata_path.exists() and encoder_metadata_path.exists() and not overwrite:
+        logger.info("Skipping transform; outputs already exist")
+        return {
+            "dataset": str(output_path),
+            "feature_metadata": str(feature_metadata_path),
+            "encoder_metadata": str(encoder_metadata_path),
+        }
+
+    df = read_dataframe(cleaned_path).copy()
+    df["premiered_season"] = df["premiered"].map(_premiered_season) if "premiered" in df.columns else "missing"
+
+    numeric_columns = [column for column in features_config["numeric_columns"] if column in df.columns]
+    categorical_columns = [column for column in features_config["categorical_columns"] if column in df.columns]
+    multi_label_columns = [column for column in features_config["multi_label_columns"] if column in df.columns]
+
+    transformed_numeric_columns = []
+    for column in numeric_columns:
+        df[column] = pd.to_numeric(df[column], errors="coerce")
+    for column in features_config.get("log_transform_columns", []):
         if column in df.columns:
-            df[f"log1p_{column}"] = np.log1p(df[column].clip(lower=0))
+            new_column = f"{column}_log1p"
+            df[new_column] = np.log1p(df[column].clip(lower=0))
+            transformed_numeric_columns.append(new_column)
+
+    for column in categorical_columns:
+        df[column] = df[column].fillna("missing").astype(str).str.strip().str.lower()
+
+    vocabularies: dict[str, list[str]] = {}
+    for column in multi_label_columns:
+        tags = _parse_multilabel_column(df[column])
+        counts = tags.explode().value_counts()
+        vocab = [tag for tag in counts.index.tolist() if tag][:50]
+        vocabularies[column] = vocab
+        for tag in vocab:
+            df[f"{column}__{tag}"] = tags.map(lambda items: int(tag in items))
 
     write_dataframe(df, output_path)
     write_json(
         {
-            "added_columns": [
-                "genres",
-                "duration_minutes",
-                "premiered_season",
-                "log1p_favorites",
-                "log1p_scored_by",
-                "log1p_members",
-                "log1p_popularity",
-            ]
+            "identifier_columns": [column for column in ["anime_id", "name"] if column in df.columns],
+            "numeric_columns": numeric_columns,
+            "categorical_columns": categorical_columns,
+            "multi_label_columns": multi_label_columns,
+            "log_transformed_columns": transformed_numeric_columns,
+            "final_candidate_feature_columns": [
+                column
+                for column in df.columns
+                if column not in {"anime_id", "name", "english_name", "other_name", "synopsis", "image_url"}
+            ],
         },
-        metadata_path,
+        feature_metadata_path,
+    )
+    write_json(
+        {
+            "categorical_columns": categorical_columns,
+            "multi_label_vocabularies": vocabularies,
+            "top_retained_tags": vocabularies,
+        },
+        encoder_metadata_path,
     )
     logger.info("Saved transformed dataset to %s", output_path)
-    return {"dataset": str(output_path), "metadata": str(metadata_path)}
+    return {
+        "dataset": str(output_path),
+        "feature_metadata": str(feature_metadata_path),
+        "encoder_metadata": str(encoder_metadata_path),
+    }

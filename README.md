@@ -42,7 +42,7 @@ Common flags:
 - `--run-id 20260405_120000`
 - `--overwrite`
 - `--skip-existing`
-- `--from-stage build_features --to-stage evaluate`
+- `--from-stage build_matrix --to-stage evaluate`
 
 Useful runner scripts:
 

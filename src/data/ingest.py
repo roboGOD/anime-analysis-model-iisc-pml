@@ -16,31 +16,41 @@ def _snake_case(name: str) -> str:
     return value.strip("_").lower()
 
 
+def _normalize_text(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    normalized = " ".join(value.replace("\r\n", "\n").replace("\r", "\n").split())
+    return normalized.strip()
+
+
 def run(data_config: dict, interim_dir: Path, logger: logging.Logger, overwrite: bool = False) -> dict[str, str]:
     raw_path = Path(data_config["raw_files"]["primary"])
-    output_path = interim_dir / "ingested_anime.parquet"
-    schema_path = interim_dir / "ingested_schema.json"
+    output_path = interim_dir / "anime_ingested.parquet"
+    schema_path = interim_dir / "anime_ingested_schema.json"
 
-    if output_path.exists() and not overwrite:
-        logger.info("Skipping ingest; output already exists at %s", output_path)
+    if output_path.exists() and schema_path.exists() and not overwrite:
+        logger.info("Skipping ingest; outputs already exist at %s", output_path)
         return {"dataset": str(output_path), "schema": str(schema_path)}
 
-    logger.info("Starting ingest from %s", raw_path)
     df = read_dataframe(raw_path)
     validate_columns(df, data_config["required_columns"])
 
-    standardized_columns = {_snake_case(column): column for column in df.columns}
-    df.columns = list(standardized_columns.keys())
-    logger.info("Ingested dataframe shape=%s", df.shape)
+    original_columns = list(df.columns)
+    df.columns = [_snake_case(column) for column in df.columns]
+    object_columns = df.select_dtypes(include="object").columns
+    for column in object_columns:
+        df[column] = df[column].map(_normalize_text)
 
     write_dataframe(df, output_path)
     write_json(
         {
-            "rows": int(df.shape[0]),
+            "raw_path": str(raw_path),
+            "row_count": int(len(df)),
+            "column_count": int(df.shape[1]),
             "columns": list(df.columns),
-            "original_columns": standardized_columns,
+            "column_mapping": dict(zip(df.columns, original_columns, strict=False)),
         },
         schema_path,
     )
-    logger.info("Saved ingested dataset to %s", output_path)
+    logger.info("Ingested %s rows and %s columns from %s", len(df), df.shape[1], raw_path)
     return {"dataset": str(output_path), "schema": str(schema_path)}
