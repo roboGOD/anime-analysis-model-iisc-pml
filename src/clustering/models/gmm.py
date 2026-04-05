@@ -38,14 +38,21 @@ class GMMModelAdapter(ClusteringModelAdapter):
             random_state=random_seed,
         )
         labels = model.fit_predict(x)
+        probabilities = model.predict_proba(x)
+        cluster_sizes = np.bincount(labels, minlength=model.n_components)
         metrics: dict[str, Any] = {
             "k": int(params["k"]),
             "covariance_type": params["covariance_type"],
             "bic": float(model.bic(x)),
             "aic": float(model.aic(x)),
+            "log_likelihood": float(model.score(x)),
             "converged": bool(model.converged_),
             "n_iter": int(model.n_iter_),
             "lower_bound": float(model.lower_bound_),
+            "smallest_cluster_proportion": float(cluster_sizes.min() / len(x)),
+            "cluster_size_distribution": cluster_sizes.tolist(),
+            "degenerate_component": bool(np.any(model.weights_ < 1e-4)),
+            "mean_max_responsibility": float(probabilities.max(axis=1).mean()),
         }
         if len(set(labels)) > 1:
             metrics["silhouette"] = float(
@@ -88,6 +95,8 @@ class GMMModelAdapter(ClusteringModelAdapter):
             "n_iter": int(model.n_iter_),
             "lower_bound": float(model.lower_bound_),
             "weights": model.weights_.tolist(),
+            "means": model.means_.tolist(),
             "component_count": int(model.n_components),
             "covariance_type": model.covariance_type,
+            "covariances": np.asarray(model.covariances_).tolist(),
         }

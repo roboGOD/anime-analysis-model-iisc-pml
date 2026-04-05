@@ -4,10 +4,16 @@ model:
 selection:
   enabled: true
   candidate_k:
+    - 2
+    - 3
     - 4
+    - 5
     - 6
+    - 7
     - 8
+    - 9
     - 10
+    - 11
     - 12
   covariance_types:
     - diag
@@ -15,6 +21,9 @@ selection:
   scoring:
     primary: bic
     secondary: aic
+final_model:
+  k: null
+  covariance_type: null
 training:
   max_iter: 300
   tol: 0.001

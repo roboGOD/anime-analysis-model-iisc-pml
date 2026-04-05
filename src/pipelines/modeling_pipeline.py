@@ -30,6 +30,7 @@ def run_stage(
             model_config,
             base_config,
             metrics_dir,
+            reports_dir,
             logger,
             overwrite=overwrite,
         )
@@ -41,6 +42,8 @@ def run_stage(
             base_config,
             models_dir,
             metrics_dir,
+            reports_dir,
+            checkpoints_dir,
             logger,
             overwrite=overwrite,
         )
@@ -48,22 +51,27 @@ def run_stage(
         return assign_clusters(
             checkpoints_dir / "row_mapping.parquet",
             processed_dir / "X_gmm.npy",
-            models_dir / f"{adapter.model_name}_model.joblib",
+            models_dir / f"final_{adapter.model_name}.joblib",
             adapter,
-            processed_dir,
+            reports_dir,
             logger,
             overwrite=overwrite,
         )
     if stage == "evaluate":
         return evaluate.run(
-            processed_dir / f"{adapter.model_name}_cluster_assignments.parquet",
+            reports_dir / "cluster_assignments.parquet",
+            processed_dir / "X_gmm.npy",
+            metrics_dir / f"{adapter.model_name}_model_selection.json",
+            processed_dir / "anime_cleaned.parquet",
             metrics_dir,
+            reports_dir,
             logger,
             overwrite=overwrite,
         )
     if stage == "diagnostics":
         return diagnostics.run(
             models_dir / f"{adapter.model_name}_model_metadata.json",
+            reports_dir / "cluster_assignments.parquet",
             reports_dir,
             logger,
             overwrite=overwrite,
