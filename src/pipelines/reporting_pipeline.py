@@ -14,6 +14,7 @@ def run_stage(
     processed_dir: Path,
     checkpoints_dir: Path,
     metrics_dir: Path,
+    reports_dir: Path,
     plots_dir: Path,
     logger: logging.Logger,
     overwrite: bool,
@@ -22,14 +23,16 @@ def run_stage(
         return eda_plots.run_profile_plots(interim_dir / "anime_ingested.parquet", plots_dir, logger, overwrite=overwrite)
     if stage == "plot_model":
         return model_plots.run(
+            adapter.model_name,
             metrics_dir / f"{adapter.model_name}_model_selection.csv",
-            metrics_dir / "gmm_cluster_sizes.csv",
+            metrics_dir / f"{adapter.model_name}_cluster_sizes.csv",
             plots_dir,
             logger,
             overwrite=overwrite,
         )
     if stage == "plot_report":
         return report_plots.run(
+            adapter.model_name,
             reports_dir / "cluster_assignments.parquet",
             processed_dir / "X_gmm.npy",
             processed_dir / "anime_cleaned.parquet",

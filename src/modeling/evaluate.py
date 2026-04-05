@@ -16,6 +16,7 @@ def _top_probability_columns(df: pd.DataFrame) -> list[str]:
 
 
 def run(
+    model_name: str,
     assignments_path: Path,
     matrix_path: Path,
     selection_summary_path: Path,
@@ -25,10 +26,10 @@ def run(
     logger: logging.Logger,
     overwrite: bool = False,
 ) -> dict[str, str]:
-    metrics_path = metrics_dir / "final_gmm_metrics.json"
+    metrics_path = metrics_dir / f"final_{model_name}_metrics.json"
     profile_csv_path = reports_dir / "cluster_profile_tables.csv"
     profile_md_path = reports_dir / "cluster_profile_summary.md"
-    cluster_sizes_path = metrics_dir / "gmm_cluster_sizes.csv"
+    cluster_sizes_path = metrics_dir / f"{model_name}_cluster_sizes.csv"
     if metrics_path.exists() and profile_csv_path.exists() and profile_md_path.exists() and not overwrite:
         logger.info("Skipping evaluation; outputs already exist")
         return {

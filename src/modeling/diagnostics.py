@@ -16,7 +16,8 @@ def run(
     logger: logging.Logger,
     overwrite: bool = False,
 ) -> dict[str, str]:
-    output_path = reports_dir / "gmm_diagnostics.json"
+    model_name = model_metadata_path.stem.removesuffix("_model_metadata")
+    output_path = reports_dir / f"{model_name}_diagnostics.json"
     if output_path.exists() and not overwrite:
         logger.info("Skipping diagnostics; output already exists at %s", output_path)
         return {"diagnostics": str(output_path)}

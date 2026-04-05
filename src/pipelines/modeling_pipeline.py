@@ -59,6 +59,7 @@ def run_stage(
         )
     if stage == "evaluate":
         return evaluate.run(
+            adapter.model_name,
             reports_dir / "cluster_assignments.parquet",
             processed_dir / "X_gmm.npy",
             metrics_dir / f"{adapter.model_name}_model_selection.json",

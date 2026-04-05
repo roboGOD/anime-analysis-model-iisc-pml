@@ -12,6 +12,7 @@ from src.utils.io import read_dataframe
 
 
 def run(
+    model_name: str,
     assignments_path: Path,
     matrix_path: Path,
     cleaned_metadata_path: Path,
@@ -19,12 +20,12 @@ def run(
     logger: logging.Logger,
     overwrite: bool = False,
 ) -> dict[str, str]:
-    confidence_path = plots_dir / "gmm_max_responsibility_hist.png"
-    entropy_path = plots_dir / "gmm_assignment_entropy_hist.png"
-    heatmap_path = plots_dir / "gmm_cluster_numeric_heatmap.png"
-    genres_path = plots_dir / "gmm_top_genres_by_cluster.png"
-    categories_path = plots_dir / "gmm_top_categorical_by_cluster.png"
-    projection_path = plots_dir / "gmm_cluster_projection.png"
+    confidence_path = plots_dir / f"{model_name}_max_responsibility_hist.png"
+    entropy_path = plots_dir / f"{model_name}_assignment_entropy_hist.png"
+    heatmap_path = plots_dir / f"{model_name}_cluster_numeric_heatmap.png"
+    genres_path = plots_dir / f"{model_name}_top_genres_by_cluster.png"
+    categories_path = plots_dir / f"{model_name}_top_categorical_by_cluster.png"
+    projection_path = plots_dir / f"{model_name}_cluster_projection.png"
     if all(path.exists() for path in [confidence_path, entropy_path, heatmap_path, genres_path, categories_path, projection_path]) and not overwrite:
         logger.info("Skipping report plots; outputs already exist")
         return {
@@ -40,6 +41,7 @@ def run(
     cleaned = read_dataframe(cleaned_metadata_path)
     merged = assignments.merge(cleaned, on=["anime_id", "name"], how="left")
     x = np.load(matrix_path)
+    outputs: dict[str, str] = {}
 
     for column, output_path, title in [
         ("max_probability", confidence_path, "Max Responsibility"),
@@ -51,6 +53,8 @@ def run(
         fig.tight_layout()
         fig.savefig(output_path, dpi=150)
         plt.close(fig)
+    outputs["confidence_plot"] = str(confidence_path)
+    outputs["entropy_plot"] = str(entropy_path)
 
     numeric_columns = [column for column in ["score", "episodes", "duration_minutes", "members", "favorites", "scored_by"] if column in merged.columns]
     if numeric_columns:
@@ -70,6 +74,7 @@ def run(
         fig.tight_layout()
         fig.savefig(heatmap_path, dpi=150)
         plt.close(fig)
+        outputs["heatmap_plot"] = str(heatmap_path)
 
     genres = (
         merged[["cluster", "genres"]]
@@ -88,6 +93,7 @@ def run(
         fig.tight_layout()
         fig.savefig(genres_path, dpi=150)
         plt.close(fig)
+        outputs["genres_plot"] = str(genres_path)
 
     categorical_rows = []
     for column in [col for col in ["type", "source", "rating"] if col in merged.columns]:
@@ -105,6 +111,7 @@ def run(
         fig.tight_layout()
         fig.savefig(categories_path, dpi=150)
         plt.close(fig)
+        outputs["categories_plot"] = str(categories_path)
 
     projection = PCA(n_components=2, random_state=42).fit_transform(x)
     alpha = np.clip(merged["max_probability"].to_numpy(), 0.2, 1.0)
@@ -115,13 +122,7 @@ def run(
     fig.tight_layout()
     fig.savefig(projection_path, dpi=150)
     plt.close(fig)
+    outputs["projection_plot"] = str(projection_path)
 
     logger.info("Saved report plots to %s", plots_dir)
-    return {
-        "confidence_plot": str(confidence_path),
-        "entropy_plot": str(entropy_path),
-        "heatmap_plot": str(heatmap_path),
-        "genres_plot": str(genres_path),
-        "categories_plot": str(categories_path),
-        "projection_plot": str(projection_path),
-    }
+    return outputs

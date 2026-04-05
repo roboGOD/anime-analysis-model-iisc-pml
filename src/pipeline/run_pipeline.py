@@ -109,6 +109,7 @@ def run_pipeline(
                 processed_dir,
                 run_paths.checkpoints_dir,
                 run_paths.metrics_dir,
+                run_paths.reports_dir,
                 run_paths.plots_dir,
                 logger,
                 effective_overwrite,
