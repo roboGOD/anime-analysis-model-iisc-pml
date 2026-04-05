@@ -29,6 +29,7 @@ class KMeansReducedModelAdapter(ClusteringModelAdapter):
             "smallest_cluster_proportion": float(cluster_sizes.min() / len(x)),
             "largest_cluster_proportion": float(cluster_sizes.max() / len(x)),
             "cluster_size_distribution": cluster_sizes.tolist(),
+            "tiny_cluster_count": int(np.sum(cluster_sizes / len(x) < 0.01)),
             "degenerate_component": bool(np.any(cluster_sizes == 0)),
             "init": params["init"],
             "algorithm": params["algorithm"],

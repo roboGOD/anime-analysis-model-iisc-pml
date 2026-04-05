@@ -50,7 +50,9 @@ class GMMModelAdapter(ClusteringModelAdapter):
             "n_iter": int(model.n_iter_),
             "lower_bound": float(model.lower_bound_),
             "smallest_cluster_proportion": float(cluster_sizes.min() / len(x)),
+            "largest_cluster_proportion": float(cluster_sizes.max() / len(x)),
             "cluster_size_distribution": cluster_sizes.tolist(),
+            "tiny_cluster_count": int(np.sum(cluster_sizes / len(x) < 0.01)),
             "degenerate_component": bool(np.any(model.weights_ < 1e-4)),
             "mean_max_responsibility": float(probabilities.max(axis=1).mean()),
         }
@@ -63,9 +65,7 @@ class GMMModelAdapter(ClusteringModelAdapter):
         return model, metrics
 
     def pick_best_params(self, results: pd.DataFrame, model_config: dict) -> dict[str, Any]:
-        scoring = model_config["selection"]["scoring"]
-        order = [scoring["primary"], scoring["secondary"]]
-        best = results.sort_values(order, ascending=True).iloc[0].to_dict()
+        best = results.iloc[0].to_dict()
         return {
             "k": int(best["k"]),
             "covariance_type": best["covariance_type"],

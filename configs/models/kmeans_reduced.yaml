@@ -28,6 +28,16 @@ selection:
     - 10
     - 11
     - 12
+  stability:
+    enabled: true
+    n_seeds: 5
+    seed_stride: 1
+  guardrails:
+    reject_smallest_cluster_below: 0.005
+    warn_smallest_cluster_below: 0.01
+    tiny_cluster_threshold: 0.01
+    reject_if_degenerate: true
+    stability_warn_below: 0.6
   scoring:
     primary: silhouette
     primary_mode: max
