@@ -4,6 +4,9 @@ This repository is organized for reusable clustering experiments on MyAnimeList 
 
 ## Dataset
 
+Kaggle URL for Dataset: 
+https://www.kaggle.com/datasets/dbdmobile/myanimelist-dataset/data?select=anime-dataset-2023.csv
+
 The default setup expects the primary raw dataset at:
 
 ```text
