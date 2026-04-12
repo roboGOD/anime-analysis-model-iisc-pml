@@ -79,6 +79,12 @@ def _evaluate_candidate_stability(
         for key, value in metrics.items()
         if isinstance(value, (int, float, np.integer, np.floating, bool)) or value is None
     }
+    non_numeric_keys = sorted({key for metrics in run_metrics for key in metrics} - numeric_keys)
+    for key in non_numeric_keys:
+        values = [metrics[key] for metrics in run_metrics if key in metrics]
+        if values and all(value == values[0] for value in values[1:]):
+            aggregated[key] = values[0]
+
     for key in sorted(numeric_keys):
         values = [metrics[key] for metrics in run_metrics if metrics.get(key) is not None]
         if not values:
